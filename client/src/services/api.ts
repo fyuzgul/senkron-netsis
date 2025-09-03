@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { ApiResponse, FilterParams } from '../types';
+import { SiparisData } from '../types/siparis';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -105,6 +106,18 @@ export const apiService = {
     error?: string;
   }> => {
     const response = await api.get('/depolar');
+    return response.data;
+  },
+
+  // Sipariş listesini getir
+  getSiparisler: async (): Promise<{
+    success: boolean;
+    data: SiparisData[];
+    mode?: string;
+    message?: string;
+    error?: string;
+  }> => {
+    const response = await api.get('/siparisler');
     return response.data;
   },
 };

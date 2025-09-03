@@ -278,6 +278,313 @@ app.get('/api/depolar', async (req, res) => {
   }
 });
 
+// Sipariş listesini getir
+app.get('/api/siparisler', async (req, res) => {
+  try {
+    if (TEST_MODE) {
+      return res.json({
+        success: true,
+        data: [
+          {
+            Sec: false,
+            SiparisID: 1,
+            SiparisNo: 'SIP2025001',
+            Tarih: '2025-01-15',
+            FirmaID: 1,
+            PersonelID: 1,
+            SiparisDurumID: 1,
+            OdemeSartlari: '30 Gün',
+            Tasima: 'Kargo',
+            TeslimYeri: 'Merkez Depo',
+            Aciklama: 'Test Siparişi',
+            Personel: 'Ahmet Yılmaz',
+            FirmaAdi: 'Test Firma',
+            FirmaKodu: 'TF001',
+            SiparisDurumu: 'Aktif',
+            SiparisDetayID: 1,
+            MalzemeID: 1,
+            BirimID: 1,
+            Miktari: 100,
+            BirimFiyati: 25.50,
+            Doviz: 'TRY',
+            TerminTarihi: '2025-02-15',
+            TerminHaftasi: 7,
+            SiparisDetayAciklama: 'Test Detay',
+            BirimAdi: 'Adet',
+            MalzemeKodu: 'MAL001',
+            MalzemeAdi: 'Test Malzeme',
+            TestYontemStandarti: 'TS EN 123',
+            IlkGelisTarihi: null,
+            IptalMiktari: 0,
+            IadeMiktari: 0,
+            GelenMiktar: 0,
+            KalanMiktar: 100,
+            Gecikme: 0,
+            MalzemeGrubu: 'Elektrik',
+            MalzemeCinsi: 'Kablo',
+            MalzemeTuru: 'Güç Kablosu',
+            KDVOran: 20,
+            KDVTutar: 510,
+            KDVliTutar: 3060,
+            TesisKodu: 'TES001',
+            TesisAdi: 'Ana Tesis',
+            Ambalaj: 'Kutu',
+            OdemeSekli: 'Havale',
+            VadeGunu: 30,
+            MalzemeOlculeri: '2.5mm²',
+            MalzemeOzelKodu1: 'OZ001',
+            MalzemeOzelKodu2: 'OZ002',
+            UreticiKodu: 'UR001',
+            IlkGecikme: 0,
+            LME: 0,
+            Premium: 0,
+            TalepNo: 'TAL001',
+            SozlesmeBirimFiyati: 25.50,
+            SozLMEDonemAciklama: '',
+            DosyaVarMi: false,
+            TeklifNo: 'TEK001',
+            AmbalajNo: 'AMB001',
+            TalepTerminTarihi: '2025-02-10',
+            TalepEden: 'Mehmet Demir',
+            BirimUzunluk: 1,
+            Uzunluk: 100,
+            KapamaDurumu: false,
+            SiparisOzelKodu1: 'SIP001',
+            SiparisOzelKodu2: 'SIP002',
+            MalzemeTedarikciKodu: 'TED001',
+            MalzemeTedarikciAdi: 'Test Tedarikçi',
+            Tutari: 2550,
+            GKTestVarMi: false,
+            TalepKaynagi: 'İç Talep',
+            TalepMasrafAciklamasi: 'Test Masraf',
+            Iskonto: 0,
+            IskontoTutar: 0,
+            SiparisBakiyeTutari: 2550,
+            NumuneID: null,
+            NumuneFormNo: null,
+            Departman: 'Satın Alma',
+            TerminTarihiGunFarki: 0,
+            TerminAciklamasi: '',
+            Marka: 'Test Marka',
+            PozNo: 'POZ001',
+            IlkTerminTarihi: '2025-02-15',
+            TalepEdenDepartman: 'Üretim',
+            SevkSekli: 'Kargo',
+            TalepNedeni: 'Stok Eksikliği',
+            BirimMiktari: 1,
+            Adedi: 100,
+            Kesit: '2.5mm²',
+            Tip: 'NYA',
+            ListeFiyati: 25.50,
+            SiraNo: 1,
+            GTIPNo: '85444200',
+            SatisSiparisNo: 'SS001',
+            Metin10: '',
+            SonHareketTarihi: '2025-01-15'
+          }
+        ],
+        mode: 'test'
+      });
+    }
+
+    const fisPool = await fisPoolPromise;
+    if (!fisPool) {
+      return res.json({
+        success: false,
+        message: 'SenkronERP Malzeme Fişleri bağlantı havuzu mevcut değil',
+        mode: 'error'
+      });
+    }
+
+    const query = `
+      SELECT   
+        CAST(0 AS BIT) AS Sec,  
+        dbo.SA_Siparisler.SiparisID, 
+        dbo.SA_Siparisler.SiparisNo, 
+        dbo.SA_Siparisler.Tarih, 
+        dbo.SA_Siparisler.FirmaID, 
+        dbo.SA_Siparisler.PersonelID, 
+        dbo.SA_Siparisler.SiparisDurumID, 
+        dbo.SA_Siparisler.OdemeSartlari, 
+        dbo.SA_Siparisler.Tasima, 
+        dbo.SA_Siparisler.TeslimYeri, 
+        dbo.SA_Siparisler.Aciklama, 
+        dbo.IK_Personeller.Adi + ' ' + dbo.IK_Personeller.Soyadi AS Personel, 
+        dbo.FN_Firmalar.FirmaAdi, 
+        dbo.FN_Firmalar.FirmaKodu, 
+        dbo.SA_SiparisDurumlari.SiparisDurumu,
+        dbo.SA_SiparisDetay.SiparisDetayID, 
+        dbo.SA_SiparisDetay.SiparisID, 
+        dbo.SA_SiparisDetay.MalzemeID, 
+        dbo.SA_SiparisDetay.BirimID, 
+        dbo.SA_SiparisDetay.Miktari, 
+        dbo.SA_SiparisDetay.BirimFiyati, 
+        dbo.SA_Siparisler.Doviz, 
+        dbo.SA_SiparisDetay.TerminTarihi,
+        DATEPART( wk, dbo.SA_SiparisDetay.TerminTarihi) AS TerminHaftasi,
+        dbo.SA_SiparisDetay.Aciklama AS SiparisDetayAciklama, 
+        dbo.SA_SiparisDetay.OzelKodu1, 
+        dbo.SA_SiparisDetay.OzelKodu2, 
+        dbo.SA_SiparisDetay.OzelKodu3, 
+        dbo.SA_SiparisDetay.OzelKodu4, 
+        dbo.SA_SiparisDetay.OzelKodu5, 
+        dbo.MD_Birimler.BirimAdi, 
+        dbo.MD_Malzemeler.MalzemeKodu, 
+        dbo.MD_Malzemeler.MalzemeAdi,
+        dbo.MD_Malzemeler.TestYontemStandarti,
+        SM.IlkGelisTarihi,
+        dbo.SA_SiparisDetay.IptalMiktari,
+        dbo.SA_SiparisDetay.IadeMiktari,
+        dbo.SA_SiparisDetay.GelenMiktar,
+        dbo.SA_SiparisDetay.KalanMiktar,
+        CASE 
+          WHEN dbo.SA_SiparisDetay.KalanMiktar <= 0.001 THEN 
+          ISNULL(DATEDIFF(day,SA_SiparisDetay.TerminTarihi,SM.SonGelisTarihi),0)
+          ELSE datediff( day, dbo.SA_SiparisDetay.TerminTarihi, GETDATE())
+        END AS Gecikme,
+        dbo.MD_MalzemeGruplari.MalzemeGrubu,
+        dbo.MD_Malzemeler.MalzemeCinsi,
+        dbo.MD_MalzemeTurleri.MalzemeTuru,
+        isnull(SA_SiparisDetay.KDVOran, isnull(MD_Malzemeler.KDVOrani,0)) as KDVOran,
+        (dbo.SA_SiparisDetay.BirimFiyati*dbo.SA_SiparisDetay.Miktari)*(isnull(SA_SiparisDetay.KDVOran, isnull(MD_Malzemeler.KDVOrani,0)) /cast(100 as decimal)) as KDVTutar,
+        (dbo.SA_SiparisDetay.BirimFiyati*dbo.SA_SiparisDetay.Miktari)*(1+isnull(SA_SiparisDetay.KDVOran, isnull(MD_Malzemeler.KDVOrani,0)) /cast(100 as decimal)) as KDVliTutar,
+        dbo.MD_Tesisler.TesisKodu,
+        dbo.MD_Tesisler.TesisAdi,
+        dbo.SA_SiparisDetay.Ambalaj,
+        dbo.SA_Siparisler.OdemeSekli,
+        dbo.SA_Siparisler.VadeGunu,
+        dbo.MD_Malzemeler.MalzemeOlculeri,
+        dbo.MD_Malzemeler.OzelKodu1 as MalzemeOzelKodu1,
+        dbo.MD_Malzemeler.OzelKodu2 as MalzemeOzelKodu2,
+        dbo.MD_Malzemeler.UreticiKodu,
+        DateDiff( day , dbo.SA_SiparisDetay.TerminTarihi , SM.IlkGelisTarihi ) AS IlkGecikme,
+        dbo.SA_Siparisler.LME,
+        dbo.MD_Malzemeler.Premium,
+        SA_Talepler.TalepNo,
+        SA_SozlesmeDetay.BirimFiyati AS SozlesmeBirimFiyati,
+        SA_Sozlesmeler.LMEDonemAciklama AS SozLMEDonemAciklama,
+        ISNULL(Dosya.DosyaVarMi,0) as DosyaVarMi,
+        SA_Teklifler.TeklifNo,
+        MD_Ambalajlar.AmbalajNo,
+        SA_TalepDetay.TerminTarihi as TalepTerminTarihi,
+        TalepEdenPersonel.Adi + ' ' + TalepEdenPersonel.Soyadi as TalepEden,
+        ISNULL(MD_Malzemeler.BirimUzunluk,0) as BirimUzunluk,
+        CAST(ISNULL(MD_Malzemeler.BirimUzunluk,0)  * SA_SiparisDetay.Miktari AS DECIMAL(18,2)) AS Uzunluk ,
+        CASE WHEN BakiyeKontrol.SiparisSevkBakiyeToplam = 0 THEN CAST(1 AS BIT) ELSE CAST(0 AS BIT) END AS KapamaDurumu,
+        SA_Siparisler.OzelKodu1 AS SiparisOzelKodu1,
+        SA_Siparisler.OzelKodu2 AS SiparisOzelKodu2,
+        EAN.TedarikciKodu AS MalzemeTedarikciKodu,
+        EAN.TedarikciAdi AS MalzemeTedarikciAdi,
+        (dbo.SA_SiparisDetay.BirimFiyati*dbo.SA_SiparisDetay.Miktari) as Tutari,
+        CAST(ISNULL(Testler.TestVarMi,0) AS BIT) AS GKTestVarMi,
+        ISNULL(SA_TalepDetay.TalepKaynagi,'') AS TalepKaynagi,
+        ISNULL(SA_TalepDetay.TalepMasrafAciklamasi,'') AS TalepMasrafAciklamasi,
+        ISNULL(SA_SiparisDetay.Iskonto,0) AS Iskonto,
+        (dbo.SA_SiparisDetay.Miktari * dbo.SA_SiparisDetay.ListeFiyati * SA_SiparisDetay.Iskonto / 100) AS IskontoTutar,
+        (SA_SiparisDetay.KalanMiktar*SA_SiparisDetay.BirimFiyati) As SiparisBakiyeTutari,
+        dbo.UR_Numune.NumuneID,
+        dbo.UR_Numune.NumuneFormNo,
+        dbo.IK_Departmanlar.Departman,
+        dbo.SA_SiparisDetay.TerminTarihiGunFarki,
+        dbo.SA_SiparisDetay.TerminAciklamasi,
+        MD_Malzemeler.Marka,
+        SA_SiparisDetay.PozNo,
+        SA_SiparisDetay.IlkTerminTarihi,
+        TalepEdenPersonelDepartman.Departman As TalepEdenDepartman,
+        SA_Siparisler.SevkSekli,
+        dbo.SA_TalepDetay.TalepNedeni,
+        dbo.SA_SiparisDetay.BirimMiktari,
+        dbo.SA_SiparisDetay.Adedi,
+        dbo.MD_Malzemeler.Kesit,
+        dbo.MD_Malzemeler.Tip,
+        SA_SiparisDetay.ListeFiyati,
+        dbo.SA_SiparisDetay.SiraNo,
+        MD_Malzemeler.GTIPNo,
+        SA_Siparisler.OdemeSartlari,
+        PS_Siparisler.SiparisNo AS SatisSiparisNo,
+        MD_Malzemeler.Metin10,
+        MD_Malzemeler.SonHareketTarihi
+      FROM dbo.SA_SiparisDetay 
+        INNER JOIN dbo.MD_Malzemeler ON dbo.SA_SiparisDetay.MalzemeID = dbo.MD_Malzemeler.MalzemeID 
+        INNER JOIN dbo.MD_MalzemeGruplari ON dbo.MD_Malzemeler.MalzemeGrupID = dbo.MD_MalzemeGruplari.MalzemeGrupID
+        INNER JOIN dbo.MD_MalzemeTurleri ON dbo.MD_Malzemeler.MalzemeTurID = dbo.MD_MalzemeTurleri.MalzemeTurID
+        INNER JOIN dbo.MD_Birimler ON dbo.SA_SiparisDetay.BirimID = dbo.MD_Birimler.BirimID
+        INNER JOIN dbo.SA_Siparisler ON dbo.SA_Siparisler.SiparisID = dbo.SA_SiparisDetay.SiparisID
+        INNER JOIN dbo.SA_SiparisTurleri ON dbo.SA_Siparisler.SiparisTurID = dbo.SA_SiparisTurleri.SiparisTurID
+        INNER JOIN dbo.SA_SiparisDurumlari ON dbo.SA_Siparisler.SiparisDurumID = dbo.SA_SiparisDurumlari.SiparisDurumID
+        INNER JOIN dbo.FN_Firmalar ON dbo.SA_Siparisler.FirmaID = dbo.FN_Firmalar.FirmaID
+        LEFT OUTER JOIN dbo.IK_Personeller ON dbo.SA_Siparisler.PersonelID = dbo.IK_Personeller.PersonelID 	 	
+        LEFT OUTER JOIN SA_TalepDetay ON SA_TalepDetay.SA_SiparisDetayID = SA_SiparisDetay.SiparisDetayID
+        LEFT OUTER JOIN SA_Talepler ON SA_Talepler.TalepID = SA_TalepDetay.TalepID
+        LEFT OUTER JOIN SA_SozlesmeDetay ON SA_SozlesmeDetay.SozlesmeDetayID = SA_SiparisDetay.SozlesmeDetayID
+        LEFT OUTER JOIN SA_Sozlesmeler ON SA_Sozlesmeler.SozlesmeID = SA_SozlesmeDetay.SozlesmeID
+        LEFT OUTER JOIN dbo.IK_Personeller TalepEdenPersonel ON dbo.SA_Talepler.PersonelID = TalepEdenPersonel.PersonelID 
+        OUTER APPLY fMD_MalzemeTedarikciEANKodu(MD_Malzemeler.MalzemeID,SA_Siparisler.FirmaID,0,0) AS EAN
+        LEFT OUTER JOIN (
+          SELECT     
+            dbo.MD_MalzemeFisDetay.SA_SiparisDetayID, 
+            MIN(dbo.MD_MalzemeFisleri.Tarih) as IlkGelisTarihi,
+            MAX(dbo.MD_Malzemefisleri.Tarih) AS  SonGelisTarihi
+          FROM dbo.MD_MalzemeFisDetay 
+            INNER JOIN dbo.MD_MalzemeFisleri ON  dbo.MD_MalzemeFisDetay.FisID=dbo.MD_MalzemeFisleri.FisID
+          WHERE dbo.MD_MalzemeFisleri.GirisCikis = 1 
+            AND dbo.MD_MalzemeFisDetay.SA_SiparisDetayID IS NOT NULL
+          GROUP BY dbo.MD_MalzemeFisDetay.SA_SiparisDetayID
+        ) AS SM ON SM.SA_SiparisDetayID = dbo.SA_SiparisDetay.SiparisDetayID
+        LEFT OUTER JOIN dbo.MD_Tesisler ON dbo.MD_Tesisler.TesisID = dbo.SA_Siparisler.TesisID
+        LEFT OUTER JOIN (
+          SELECT ID,
+            CAST(CASE WHEN MAX(DosyaID) > 0 THEN 1 ELSE 0 END AS BIT) AS DosyaVarMi
+          FROM KE_Dosyalar
+          WHERE Tablo = 'SA_Siparisler'
+          GROUP BY ID
+        ) Dosya ON Dosya.ID = SA_Siparisler.SiparisID
+        LEFT OUTER JOIN SA_Teklifler ON SA_Teklifler.TeklifID = SA_Siparisler.TeklifID
+        LEFT OUTER JOIN MD_Ambalajlar ON MD_Ambalajlar.AmbalajID = SA_SiparisDetay.AmbalajID
+        LEFT OUTER JOIN (
+          SELECT
+            SA_SiparisDetay.SiparisID,
+            SUM(CASE WHEN (SA_SiparisDetay.Miktari -  ISNULL(SA_SiparisDetay.IptalMiktari,0) + ISNULL(SA_SiparisDetay.IadeMiktari,0)) <= 0 THEN 0
+              ELSE SA_SiparisDetay.Miktari -  ISNULL(SA_SiparisDetay.IptalMiktari,0) + ISNULL(SA_SiparisDetay.IadeMiktari,0)
+            END) AS SiparisSevkBakiyeToplam
+          FROM SA_SiparisDetay
+          GROUP BY SA_SiparisDetay.SiparisID
+        ) AS BakiyeKontrol ON BakiyeKontrol.SiparisID  = SA_Siparisler.SiparisID
+        LEFT OUTER JOIN (
+          SELECT KY_MalzemeTestleri.MalzemeID,
+            CASE WHEN COUNT(KY_MalzemeTestleri.MalzemeTestID) > 0 THEN 1 ELSE 0 END AS TestVarmi
+          FROM KY_MalzemeTestleri 
+            INNER JOIN dbo.KY_Testler ON dbo.KY_MalzemeTestleri.TestID = dbo.KY_Testler.TestID
+          WHERE (dbo.KY_MalzemeTestleri.TestTurID = 1) 
+          GROUP BY KY_MalzemeTestleri.MalzemeID
+        ) AS Testler ON Testler.MalzemeID =  MD_Malzemeler.MalzemeID	
+        LEFT OUTER JOIN dbo.UR_Numune ON UR_Numune.NumuneID=dbo.SA_SiparisDetay.NumuneID
+        LEFT OUTER JOIN dbo.IK_Departmanlar ON IK_Departmanlar.DepartmanID = SA_Siparisler.DepartmanID
+        LEFT JOIN dbo.IK_Departmanlar TalepEdenPersonelDepartman ON TalepEdenPersonelDepartman.DepartmanID = TalepEdenPersonel.DepartmanID
+        LEFT JOIN PS_Siparisler ON PS_Siparisler.SiparisID=SA_Siparisler.PS_SiparisID
+      WHERE dbo.SA_Siparisler.SiparisDurumID NOT IN (90,99) AND (ISNULL(SA_SiparisDetay.Miktari,0) - ISNULL(SA_SiparisDetay.GelenMiktar,0)) - ISNULL(IptalMiktari,0) + ISNULL(IadeMiktari,0) > 0
+      ORDER BY dbo.SA_Siparisler.SiparisNo
+    `;
+
+    const result = await fisPool.request().query(query);
+    
+    res.json({
+      success: true,
+      data: result.recordset,
+      mode: 'database'
+    });
+  } catch (error) {
+    console.error('Sipariş listesi sorgu hatası:', error);
+    
+    res.json({
+      success: false,
+      message: 'Sipariş listesi alınırken hata oluştu',
+      error: error.message,
+      mode: 'error'
+    });
+  }
+});
+
 // En son fiş numarasını getir
 app.get('/api/latest-fis-no', async (req, res) => {
   try {

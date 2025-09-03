@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { FaturaData } from '../types';
 import { apiService } from '../services/api';
+import { SiparisData } from '../types/siparis';
+import SiparisSelectionModal from './SiparisSelectionModal';
 
 interface FaturaDetailModalProps {
   isOpen: boolean;
@@ -57,6 +59,8 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
   const [fisTipleriLoading, setFisTipleriLoading] = useState(false);
   const [depolar, setDepolar] = useState<Depo[]>([]);
   const [depolarLoading, setDepolarLoading] = useState(false);
+  const [isSiparisModalOpen, setIsSiparisModalOpen] = useState(false);
+  const [selectedSiparisler, setSelectedSiparisler] = useState<SiparisData[]>([]);
 
   useEffect(() => {
     if (fatura && isOpen) {
@@ -90,7 +94,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
         mteYazdirma: false,
         kur: 1,
         vade: 30, // 30 gün vade
-        depo: 'ANA DEPO'
+        depo: ''
       });
     } catch (error) {
       console.error('Fiş numarası yüklenirken hata:', error);
@@ -105,7 +109,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
         mteYazdirma: false,
         kur: 1,
         vade: 30,
-        depo: 'ANA DEPO'
+        depo: ''
       });
     } finally {
       setFisNoLoading(false);
@@ -416,6 +420,68 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
               </div>
             </div>
 
+            {/* Sipariş Seç Butonu */}
+            {formData.depo && (
+              <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-medium text-blue-900">Sipariş Seçimi</h3>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Seçilen depo: <span className="font-medium">{formData.depo}</span>
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSiparisModalOpen(true)}
+                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  >
+                    Sipariş Seç
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Seçilen Siparişler */}
+            {selectedSiparisler.length > 0 && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-medium text-green-900">
+                    Seçilen Siparişler ({selectedSiparisler.length})
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => setIsSiparisModalOpen(true)}
+                    className="px-3 py-1 text-sm text-green-700 bg-green-100 border border-green-300 rounded-md hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors"
+                  >
+                    Sipariş Ekle
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {selectedSiparisler.map((siparis, index) => (
+                    <div key={`${siparis.SiparisDetayID}-${index}`} className="flex items-center justify-between p-3 bg-white border border-green-200 rounded-md">
+                      <div className="flex-1">
+                        <div className="text-sm text-green-700">
+                          <div><span className="font-medium">Sipariş No:</span> {siparis.SiparisNo}</div>
+                          <div><span className="font-medium">Malzeme:</span> {siparis.MalzemeKodu} - {siparis.MalzemeAdi}</div>
+                          <div><span className="font-medium">Miktar:</span> {siparis.Miktari} {siparis.BirimAdi}</div>
+                          <div><span className="font-medium">Tutar:</span> {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' }).format(siparis.Tutari)}</div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSiparisler(prev => prev.filter((_, i) => i !== index));
+                        }}
+                        className="ml-3 px-2 py-1 text-xs text-red-700 bg-red-100 border border-red-300 rounded-md hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors"
+                      >
+                        Kaldır
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Form Actions */}
             <div className="flex justify-end space-x-3 mt-8 pt-6 border-t">
               <button
@@ -446,6 +512,16 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
           </form>
         </div>
       </div>
+
+      {/* Sipariş Seçim Modal */}
+      <SiparisSelectionModal
+        isOpen={isSiparisModalOpen}
+        onClose={() => setIsSiparisModalOpen(false)}
+        selectedSiparisler={selectedSiparisler}
+        onSelect={(siparis) => {
+          setSelectedSiparisler(prev => [...prev, siparis]);
+        }}
+      />
     </div>
   );
 };
