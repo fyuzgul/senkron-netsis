@@ -6,12 +6,6 @@ export interface FaturaData {
   STRA_GCMIK: number;
   OLCUBR: string;
   TARIH: string;
-  DOVIZTIP: string;
-  DOVIZTUTAR: number;
-  GENELTOPLAM: number;
-  BRUTTUTAR: number;
-  DOVIZBRUTTUTAR: number;
-  SIPARISNO: string;
   SIPARIS_TARIH: string;
 }
 

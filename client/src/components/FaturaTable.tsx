@@ -54,14 +54,6 @@ const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error }) => {
     return new Date(dateString).toLocaleDateString('tr-TR');
   };
 
-  const formatCurrency = (amount: number) => {
-    if (!amount) return '-';
-    return new Intl.NumberFormat('tr-TR', {
-      style: 'currency',
-      currency: 'TRY',
-    }).format(amount);
-  };
-
   return (
     <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
       <div className="overflow-x-auto">
@@ -90,19 +82,7 @@ const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error }) => {
                 Tarih
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Döviz Tip
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Döviz Tutar
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Genel Toplam
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Brüt Tutar
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Sipariş No
+                Sipariş Tarihi
               </th>
             </tr>
           </thead>
@@ -131,19 +111,7 @@ const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error }) => {
                   {formatDate(fatura.TARIH)}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {fatura.DOVIZTIP}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(fatura.DOVIZTUTAR)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(fatura.GENELTOPLAM)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {formatCurrency(fatura.BRUTTUTAR)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {fatura.SIPARISNO}
+                  {formatDate(fatura.SIPARIS_TARIH)}
                 </td>
               </tr>
             ))}
