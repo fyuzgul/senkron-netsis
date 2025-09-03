@@ -40,6 +40,26 @@ module.exports = {
           idleTimeoutMillis: 30000
         }
       }
+    },
+    // SenkronERP - Malzeme Fişleri için
+    senkronFis: {
+      server: 'CMK-PROMETRIK',
+      database: 'SenkronERP',
+      user: 'muhendis',
+      password: "@R5q@Ou'Rb_K+NA",
+      port: 1433,
+      options: {
+        encrypt: false,
+        trustServerCertificate: true,
+        enableArithAbort: true,
+        connectionTimeout: 30000,
+        requestTimeout: 30000,
+        pool: {
+          max: 10,
+          min: 0,
+          idleTimeoutMillis: 30000
+        }
+      }
     }
   },
   // API port

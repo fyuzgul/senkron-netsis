@@ -97,6 +97,7 @@ const mockData = [
 
 // SQL Server bağlantı havuzu
 let poolPromise = null;
+let fisPoolPromise = null;
 
 if (!TEST_MODE) {
   // CMK veritabanını kullan (faturalar için)
@@ -111,6 +112,20 @@ if (!TEST_MODE) {
     .catch(err => {
       console.error('Veritabanı bağlantı hatası:', err);
       console.log('Test moduna geçiliyor...');
+      return null;
+    });
+
+  // SenkronERP Malzeme Fişleri için ayrı bağlantı
+  const fisDbConfig = config.databases.senkronFis;
+  
+  fisPoolPromise = new sql.ConnectionPool(fisDbConfig)
+    .connect()
+    .then(pool => {
+      console.log(`SenkronERP Malzeme Fişleri veritabanına başarıyla bağlandı: ${fisDbConfig.database}@${fisDbConfig.server}`);
+      return pool;
+    })
+    .catch(err => {
+      console.error('SenkronERP Malzeme Fişleri bağlantı hatası:', err);
       return null;
     });
 } else {
@@ -155,6 +170,121 @@ app.get('/api/db-test', async (req, res) => {
     res.json({
       success: false,
       message: 'Veritabanı bağlantı hatası',
+      error: error.message,
+      mode: 'error'
+    });
+  }
+});
+
+// Malzeme Fiş Tiplerini getir
+app.get('/api/malzeme-fis-tipleri', async (req, res) => {
+  try {
+    if (TEST_MODE) {
+      return res.json({
+        success: true,
+        data: [
+          { MalzemeFisTipID: 1, MalzemeFisTipi: 'Satış Faturası' },
+          { MalzemeFisTipID: 2, MalzemeFisTipi: 'Alış Faturası' },
+          { MalzemeFisTipID: 3, MalzemeFisTipi: 'İade Faturası' },
+          { MalzemeFisTipID: 4, MalzemeFisTipi: 'Proforma Fatura' }
+        ],
+        mode: 'test'
+      });
+    }
+
+    const fisPool = await fisPoolPromise;
+    if (!fisPool) {
+      return res.json({
+        success: false,
+        message: 'SenkronERP Malzeme Fişleri bağlantı havuzu mevcut değil',
+        mode: 'error'
+      });
+    }
+
+    const query = `
+      SELECT [MalzemeFisTipID], [MalzemeFisTipi]
+      FROM [SenkronERP].[dbo].[MD_MalzemeFisTipleri]
+      ORDER BY [MalzemeFisTipi]
+    `;
+
+    const result = await fisPool.request().query(query);
+    
+    res.json({
+      success: true,
+      data: result.recordset,
+      mode: 'database'
+    });
+  } catch (error) {
+    console.error('Malzeme Fiş Tipleri sorgu hatası:', error);
+    
+    res.json({
+      success: false,
+      message: 'Malzeme Fiş Tipleri alınırken hata oluştu',
+      error: error.message,
+      mode: 'error'
+    });
+  }
+});
+
+// En son fiş numarasını getir
+app.get('/api/latest-fis-no', async (req, res) => {
+  try {
+    if (TEST_MODE) {
+      return res.json({
+        success: true,
+        latestFisNo: 1000,
+        nextFisNo: 1001,
+        mode: 'test'
+      });
+    }
+
+    const fisPool = await fisPoolPromise;
+    if (!fisPool) {
+      return res.json({
+        success: false,
+        message: 'SenkronERP Malzeme Fişleri bağlantı havuzu mevcut değil',
+        mode: 'error'
+      });
+    }
+
+    // Önce tüm fiş numaralarını alıp JavaScript'te sıralayalım
+    const query = `
+      SELECT [FisNo]
+      FROM [SenkronERP].[dbo].[MD_MalzemeFisleri] 
+      WHERE MalzemeFisTurID = 10
+        AND [FisNo] IS NOT NULL
+        AND [FisNo] != ''
+    `;
+
+    const result = await fisPool.request().query(query);
+    
+    let latestFisNo = 0;
+    let nextFisNo = 1;
+    
+    if (result.recordset.length > 0) {
+      // Sayısal olan fiş numaralarını filtrele ve en büyüğünü bul
+      const numericFisNos = result.recordset
+        .map(row => parseInt(row.FisNo))
+        .filter(num => !isNaN(num));
+      
+      if (numericFisNos.length > 0) {
+        latestFisNo = Math.max(...numericFisNos);
+        nextFisNo = latestFisNo + 1;
+      }
+    }
+    
+    res.json({
+      success: true,
+      latestFisNo: latestFisNo,
+      nextFisNo: nextFisNo,
+      mode: 'database'
+    });
+  } catch (error) {
+    console.error('Fiş numarası sorgu hatası:', error);
+    
+    res.json({
+      success: false,
+      message: 'Fiş numarası alınırken hata oluştu',
       error: error.message,
       mode: 'error'
     });
@@ -321,10 +451,18 @@ process.on('SIGINT', async () => {
   console.log('Sunucu kapatılıyor...');
   try {
     const pool = await poolPromise;
-    await pool.close();
-    console.log('Veritabanı bağlantısı kapatıldı');
+    if (pool) {
+      await pool.close();
+      console.log('CMK veritabanı bağlantısı kapatıldı');
+    }
+    
+    const fisPool = await fisPoolPromise;
+    if (fisPool) {
+      await fisPool.close();
+      console.log('SenkronERP Malzeme Fişleri bağlantısı kapatıldı');
+    }
   } catch (error) {
-    console.error('Veritabanı bağlantısı kapatılırken hata:', error);
+    console.error('Veritabanı bağlantıları kapatılırken hata:', error);
   }
   process.exit(0);
 });

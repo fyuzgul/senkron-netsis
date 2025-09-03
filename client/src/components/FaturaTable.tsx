@@ -5,9 +5,10 @@ interface FaturaTableProps {
   data: FaturaData[];
   loading: boolean;
   error?: string;
+  onRowClick?: (fatura: FaturaData) => void;
 }
 
-const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error }) => {
+const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error, onRowClick }) => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -88,7 +89,11 @@ const FaturaTable: React.FC<FaturaTableProps> = ({ data, loading, error }) => {
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {data.map((fatura, index) => (
-              <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+              <tr 
+                key={index} 
+                className={`${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 cursor-pointer transition-colors`}
+                onClick={() => onRowClick?.(fatura)}
+              >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                   {fatura.CARIKOD}
                 </td>

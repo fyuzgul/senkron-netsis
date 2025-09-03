@@ -4,6 +4,7 @@ import { apiService } from './services/api';
 import FilterForm from './components/FilterForm';
 import FaturaTable from './components/FaturaTable';
 import StatsCard from './components/StatsCard';
+import FaturaDetailModal from './components/FaturaDetailModal';
 
 function App() {
   const [allData, setAllData] = useState<FaturaData[]>([]);
@@ -18,6 +19,8 @@ function App() {
     baslangicTarih: '',
     bitisTarih: '',
   });
+  const [selectedFatura, setSelectedFatura] = useState<FaturaData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // API sağlık kontrolü
   useEffect(() => {
@@ -81,6 +84,16 @@ function App() {
     setCurrentFilters(params);
     const filtered = applyFilters(allData, params);
     setFilteredData(filtered);
+  };
+
+  const handleRowClick = (fatura: FaturaData) => {
+    setSelectedFatura(fatura);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedFatura(null);
   };
 
   const getStatusColor = () => {
@@ -196,7 +209,12 @@ function App() {
               </p>
             </div>
             <div className="p-6">
-              <FaturaTable data={filteredData} loading={loading} error={error || undefined} />
+              <FaturaTable 
+                data={filteredData} 
+                loading={loading} 
+                error={error || undefined} 
+                onRowClick={handleRowClick}
+              />
             </div>
           </div>
 
@@ -236,6 +254,13 @@ function App() {
           </div>
         </div>
       </footer>
+
+      {/* Fatura Detail Modal */}
+      <FaturaDetailModal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        fatura={selectedFatura}
+      />
     </div>
   );
 }

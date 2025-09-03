@@ -58,6 +58,34 @@ export const apiService = {
     });
     return response.data;
   },
+
+  // En son fiş numarasını getir
+  getLatestFisNo: async (): Promise<{
+    success: boolean;
+    latestFisNo: number;
+    nextFisNo: number;
+    mode?: string;
+    message?: string;
+    error?: string;
+  }> => {
+    const response = await api.get('/latest-fis-no');
+    return response.data;
+  },
+
+  // Malzeme Fiş Tiplerini getir
+  getMalzemeFisTipleri: async (): Promise<{
+    success: boolean;
+    data: Array<{
+      MalzemeFisTipID: number;
+      MalzemeFisTipi: string;
+    }>;
+    mode?: string;
+    message?: string;
+    error?: string;
+  }> => {
+    const response = await api.get('/malzeme-fis-tipleri');
+    return response.data;
+  },
 };
 
 export default api;
