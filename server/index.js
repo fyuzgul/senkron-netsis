@@ -226,6 +226,57 @@ app.get('/api/malzeme-fis-tipleri', async (req, res) => {
   }
 });
 
+// Depo listesini getir
+app.get('/api/depolar', async (req, res) => {
+  try {
+    if (TEST_MODE) {
+      return res.json({
+        success: true,
+        data: [
+          { AdresID: 1, DepoID: 1, Adres: 'Merkez Depo', DepoAdi: 'ANA DEPO' },
+          { AdresID: 2, DepoID: 2, Adres: 'Yan Depo', DepoAdi: 'YAN DEPO' },
+          { AdresID: 3, DepoID: 3, Adres: 'Şube Depo', DepoAdi: 'ŞUBE DEPO' }
+        ],
+        mode: 'test'
+      });
+    }
+
+    const fisPool = await fisPoolPromise;
+    if (!fisPool) {
+      return res.json({
+        success: false,
+        message: 'SenkronERP Malzeme Fişleri bağlantı havuzu mevcut değil',
+        mode: 'error'
+      });
+    }
+
+    const query = `
+      SELECT [AdresID], adres.[DepoID], [Adres], adres.[Pasif], adres.[OzelKodu1], adres.[OzelKodu2], adres.[OzelKodu3], DepoAdi
+      FROM [SenkronERP].[dbo].[MD_Adresler] as adres
+      INNER JOIN [SenkronERP].[dbo].[MD_Depolar] as depo
+      ON depo.DepoID = adres.DepoID
+      WHERE adres.[Pasif] = 0
+      ORDER BY DepoAdi, [Adres]
+    `;
+
+    const result = await fisPool.request().query(query);
+    
+    res.json({
+      success: true,
+      data: result.recordset,
+      mode: 'database'
+    });
+  } catch (error) {
+    console.error('Depo listesi sorgu hatası:', error);
+    
+    res.json({
+      success: false,
+      message: 'Depo listesi alınırken hata oluştu',
+      error: error.message,
+      mode: 'error'
+    });
+  }
+});
 
 // En son fiş numarasını getir
 app.get('/api/latest-fis-no', async (req, res) => {

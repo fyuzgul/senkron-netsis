@@ -17,13 +17,24 @@ interface FaturaDetailData {
   doviz: string;
   mteYazdirma: boolean;
   kur: number;
-  vade: string;
+  vade: number;
   depo: string;
 }
 
 interface MalzemeFisTipi {
   MalzemeFisTipID: number;
   MalzemeFisTipi: string;
+}
+
+interface Depo {
+  AdresID: number;
+  DepoID: number;
+  Adres: string;
+  Pasif: number;
+  OzelKodu1: string;
+  OzelKodu2: string;
+  OzelKodu3: string;
+  DepoAdi: string;
 }
 
 const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, fatura }) => {
@@ -36,7 +47,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
     doviz: 'TRY',
     mteYazdirma: false,
     kur: 1,
-    vade: '',
+    vade: 30,
     depo: ''
   });
 
@@ -44,11 +55,14 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
   const [fisNoLoading, setFisNoLoading] = useState(false);
   const [fisTipleri, setFisTipleri] = useState<MalzemeFisTipi[]>([]);
   const [fisTipleriLoading, setFisTipleriLoading] = useState(false);
+  const [depolar, setDepolar] = useState<Depo[]>([]);
+  const [depolarLoading, setDepolarLoading] = useState(false);
 
   useEffect(() => {
     if (fatura && isOpen) {
       loadFisNoAndSetFormData();
       loadFisTipleri();
+      loadDepolar();
     }
   }, [fatura, isOpen]);
 
@@ -75,7 +89,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
         doviz: 'TRY',
         mteYazdirma: false,
         kur: 1,
-        vade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 gün sonra
+        vade: 30, // 30 gün vade
         depo: 'ANA DEPO'
       });
     } catch (error) {
@@ -90,7 +104,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
         doviz: 'TRY',
         mteYazdirma: false,
         kur: 1,
-        vade: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        vade: 30,
         depo: 'ANA DEPO'
       });
     } finally {
@@ -128,11 +142,40 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
     }
   };
 
+  const loadDepolar = async () => {
+    setDepolarLoading(true);
+    try {
+      const response = await apiService.getDepolar();
+      if (response.success && response.data) {
+        setDepolar(response.data);
+      } else {
+        console.warn('Depo listesi alınamadı:', response.message);
+        // Varsayılan değerler
+        setDepolar([
+          { AdresID: 1, DepoID: 1, Adres: 'Merkez Depo', DepoAdi: 'ANA DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' },
+          { AdresID: 2, DepoID: 2, Adres: 'Yan Depo', DepoAdi: 'YAN DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' },
+          { AdresID: 3, DepoID: 3, Adres: 'Şube Depo', DepoAdi: 'ŞUBE DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' }
+        ]);
+      }
+    } catch (error) {
+      console.error('Depo listesi yüklenirken hata:', error);
+      // Hata durumunda varsayılan değerler
+      setDepolar([
+        { AdresID: 1, DepoID: 1, Adres: 'Merkez Depo', DepoAdi: 'ANA DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' },
+        { AdresID: 2, DepoID: 2, Adres: 'Yan Depo', DepoAdi: 'YAN DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' },
+        { AdresID: 3, DepoID: 3, Adres: 'Şube Depo', DepoAdi: 'ŞUBE DEPO', Pasif: 0, OzelKodu1: '', OzelKodu2: '', OzelKodu3: '' }
+      ]);
+    } finally {
+      setDepolarLoading(false);
+    }
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : 
+              name === 'vade' ? parseInt(value) || 0 : value
     }));
   };
 
@@ -335,14 +378,15 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
               {/* Vade */}
               <div>
                 <label htmlFor="vade" className="block text-sm font-medium text-gray-700 mb-2">
-                  Vade
+                  Vade (Gün)
                 </label>
                 <input
-                  type="date"
+                  type="number"
                   id="vade"
                   name="vade"
                   value={formData.vade}
                   onChange={handleInputChange}
+                  min="0"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 />
@@ -358,13 +402,16 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
                   name="depo"
                   value={formData.depo}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  disabled={depolarLoading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   required
                 >
                   <option value="">Seçiniz</option>
-                  <option value="ANA DEPO">ANA DEPO</option>
-                  <option value="YAN DEPO">YAN DEPO</option>
-                  <option value="ŞUBE DEPO">ŞUBE DEPO</option>
+                  {depolar.map((depo) => (
+                    <option key={depo.AdresID} value={`${depo.DepoAdi} - ${depo.Adres}`}>
+                      {depo.DepoAdi} - {depo.Adres}
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

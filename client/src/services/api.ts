@@ -86,6 +86,27 @@ export const apiService = {
     const response = await api.get('/malzeme-fis-tipleri');
     return response.data;
   },
+
+  // Depo listesini getir
+  getDepolar: async (): Promise<{
+    success: boolean;
+    data: Array<{
+      AdresID: number;
+      DepoID: number;
+      Adres: string;
+      Pasif: number;
+      OzelKodu1: string;
+      OzelKodu2: string;
+      OzelKodu3: string;
+      DepoAdi: string;
+    }>;
+    mode?: string;
+    message?: string;
+    error?: string;
+  }> => {
+    const response = await api.get('/depolar');
+    return response.data;
+  },
 };
 
 export default api;
