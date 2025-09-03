@@ -226,6 +226,7 @@ app.get('/api/malzeme-fis-tipleri', async (req, res) => {
   }
 });
 
+
 // En son fiş numarasını getir
 app.get('/api/latest-fis-no', async (req, res) => {
   try {

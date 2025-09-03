@@ -10,7 +10,7 @@ interface FaturaDetailModalProps {
 
 interface FaturaDetailData {
   fisNo: string;
-  irsaliyeNo: string;
+  faturaNo: string;
   tipi: string;
   tarih: string;
   tedarikciKodu: string;
@@ -29,7 +29,7 @@ interface MalzemeFisTipi {
 const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, fatura }) => {
   const [formData, setFormData] = useState<FaturaDetailData>({
     fisNo: '',
-    irsaliyeNo: '',
+    faturaNo: '',
     tipi: '',
     tarih: '',
     tedarikciKodu: '',
@@ -68,7 +68,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
       // Form verilerini ayarla
       setFormData({
         fisNo: nextFisNo,
-        irsaliyeNo: 'IRS-' + Math.random().toString(36).substr(2, 9),
+        faturaNo: fatura?.FATIRS_NO || '',
         tipi: 'Satış Faturası',
         tarih: fatura?.TARIH || '',
         tedarikciKodu: fatura?.CARIKOD || '',
@@ -83,7 +83,7 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
       // Hata durumunda varsayılan değerler
       setFormData({
         fisNo: '1',
-        irsaliyeNo: 'IRS-' + Math.random().toString(36).substr(2, 9),
+        faturaNo: fatura?.FATIRS_NO || '',
         tipi: 'Satış Faturası',
         tarih: fatura?.TARIH || '',
         tedarikciKodu: fatura?.CARIKOD || '',
@@ -197,16 +197,16 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
                 />
               </div>
 
-              {/* İrsaliye No */}
+              {/* Fatura No */}
               <div>
-                <label htmlFor="irsaliyeNo" className="block text-sm font-medium text-gray-700 mb-2">
-                  İrsaliye No
+                <label htmlFor="faturaNo" className="block text-sm font-medium text-gray-700 mb-2">
+                  Fatura No
                 </label>
                 <input
                   type="text"
-                  id="irsaliyeNo"
-                  name="irsaliyeNo"
-                  value={formData.irsaliyeNo}
+                  id="faturaNo"
+                  name="faturaNo"
+                  value={formData.faturaNo}
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
@@ -290,10 +290,12 @@ const FaturaDetailModal: React.FC<FaturaDetailModalProps> = ({ isOpen, onClose, 
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   required
                 >
-                  <option value="TRY">TRY</option>
-                  <option value="USD">USD</option>
+                  <option value="CHF">CHF</option>
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
+                  <option value="RUB">RUB</option>
+                  <option value="TL">TL</option>
+                  <option value="USD">USD</option>
                 </select>
               </div>
 
